@@ -21,9 +21,9 @@ public class StoredFieldLeech extends Leech
     private Set<String> fieldSelection;
 
 
-    public StoredFieldLeech (String indexPath, String field) throws Exception
+    public StoredFieldLeech (String indexPath, String field, String filter) throws Exception
     {
-        super (indexPath, field);
+        super (indexPath, field, filter);
 
         sortField = Utils.getEnvironment ("SORTFIELD");
         valueField = Utils.getEnvironment ("VALUEFIELD");
@@ -38,6 +38,7 @@ public class StoredFieldLeech extends Leech
         fieldSelection.add(sortField);
         fieldSelection.add(valueField);
         fieldSelection.add("id");   // make Solr id available for error messages
+        fieldSelection.add(filter);
 
         reader = DirectoryReader.open (FSDirectory.open (new File (indexPath).toPath ()));
         buffer = new LinkedList<BrowseEntry> ();
@@ -51,7 +52,12 @@ public class StoredFieldLeech extends Leech
 
         String[] sort_key = doc.getValues (sortField);
         String[] value = doc.getValues (valueField);
-
+        if (filter != null) {
+            String filterValue = doc.get(filter);
+            if (!filterValue.equals("T")) {
+                return;
+            }
+        }
         if (sort_key.length == value.length) {
             for (int i = 0; i < value.length; i++) {
                 buffer.add (new BrowseEntry(buildSortKey(sort_key[i]),
