@@ -105,7 +105,6 @@ class HeadingsDB
 
     public HeadingsDB (String path, String filterBy) throws Exception
     {
-Log.info("HeadingsDB constructor: filterBy: " + filterBy);
         String pathFilter = (filterBy != null) ? filterBy : "";
         this.path = path.replace("%filter%", pathFilter);
         normalizer = NormalizerFactory.getNormalizer ();
@@ -113,12 +112,9 @@ Log.info("HeadingsDB constructor: filterBy: " + filterBy);
 
     public HeadingsDB (String path, String normalizerClassName, String filterBy) throws Exception
     {
-Log.info("FILTER BY in HeadingsDB: " + filterBy);
         String pathFilter = (filterBy != null) ? filterBy : "";
         this.path = path.replace("%filter%", pathFilter);
-Log.info("PATH IN HeadingsDB: " + this.path);
         normalizer = NormalizerFactory.getNormalizer (normalizerClassName);
-        Log.info("constructor: HeadingsDB (" + this.path + ", " + normalizerClassName + ")");
     }
 
 
@@ -132,7 +128,6 @@ Log.info("PATH IN HeadingsDB: " + this.path);
         Class.forName ("org.sqlite.JDBC");
 
         db = DriverManager.getConnection ("jdbc:sqlite:" + path);
-Log.info("PATH: " + path);
         db.setAutoCommit (false);
         dbVersion = currentVersion ();
 
@@ -158,7 +153,6 @@ Log.info("PATH: " + path);
     synchronized public void reopenIfUpdated () throws Exception
     {
         dbLock.readLock ().lock ();
-Log.info("reopenIfUpdated path:" + path);
         File flag = new File (path + "-ready");
         File updated = new File (path + "-updated");
         if (db == null || (flag.exists () && updated.exists ())) {
