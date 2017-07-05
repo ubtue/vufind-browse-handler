@@ -848,7 +848,6 @@ public class BrowseRequestHandler extends RequestHandlerBase
         String from = p.get ("from");
         String extras = p.get ("extras");
         String filterBy = p.get("filterBy");
-System.err.println("handleRequestBody FILTERBY: " + filterBy);
 
         // extras needs to be a non-null string
 	if (extras == null) {
