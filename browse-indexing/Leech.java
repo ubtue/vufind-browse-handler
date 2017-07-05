@@ -3,7 +3,7 @@ import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 import java.io.*;
 import java.util.*;
-
+import java.util.logging.Logger;
 import org.vufind.util.BrowseEntry;
 import org.vufind.util.Normalizer;
 import org.vufind.util.NormalizerFactory;
@@ -13,6 +13,7 @@ public class Leech
 {
     protected CompositeReader reader;
     protected IndexSearcher searcher;
+    protected String filter;
 
     protected List<LeafReaderContext> leafReaders;
 
@@ -23,7 +24,7 @@ public class Leech
 
 
     public Leech (String indexPath,
-                  String field) throws Exception
+                  String field, String filter) throws Exception
     {
         // Open our composite reader (a top-level DirectoryReader that
         // contains one reader per segment in our index).
@@ -38,6 +39,7 @@ public class Leech
         leafReaders = new ArrayList<>(reader.getContext().leaves());
 
         this.field = field;
+        this.filter = filter;
 
         String normalizerClass = System.getProperty("browse.normalizer");
         normalizer = NormalizerFactory.getNormalizer(normalizerClass);
@@ -59,7 +61,19 @@ public class Leech
     private boolean termExists (String t)
     {
         try {
-            return (this.searcher.search (new ConstantScoreQuery(new TermQuery (new Term(this.field, t))),
+            Query q;
+            if (this.filter != null) {
+                TermQuery tq = new TermQuery (new Term (this.field, t));
+                TermQuery fq = new TermQuery (new Term (this.filter, "T"));
+                BooleanQuery.Builder qb = new BooleanQuery.Builder();
+                qb.add(tq, BooleanClause.Occur.MUST);
+                qb.add(fq, BooleanClause.Occur.MUST);
+                q = qb.build();
+            } else {
+                q = new TermQuery (new Term (this.field, t));
+            }
+               
+            return (this.searcher.search (new ConstantScoreQuery(q),
                                           1).totalHits > 0);
         } catch (IOException e) {
             return false;

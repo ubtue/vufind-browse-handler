@@ -103,17 +103,17 @@ class HeadingsDB
 
     ReentrantReadWriteLock dbLock = new ReentrantReadWriteLock ();
 
-    public HeadingsDB (String path) throws Exception
+    public HeadingsDB (String path, String filterBy) throws Exception
     {
-        this.path = path;
+        String pathFilter = (filterBy != null) ? filterBy : "";
+        this.path = path.replace("%filter%", pathFilter);
         normalizer = NormalizerFactory.getNormalizer ();
     }
 
-    public HeadingsDB (String path, String normalizerClassName) throws Exception
+    public HeadingsDB (String path, String normalizerClassName, String filterBy) throws Exception
     {
-        Log.info("constructor: HeadingsDB (" + path + ", " + normalizerClassName + ")");
-
-        this.path = path;
+        String pathFilter = (filterBy != null) ? filterBy : "";
+        this.path = path.replace("%filter%", pathFilter);
         normalizer = NormalizerFactory.getNormalizer (normalizerClassName);
     }
 
@@ -153,7 +153,6 @@ class HeadingsDB
     synchronized public void reopenIfUpdated () throws Exception
     {
         dbLock.readLock ().lock ();
-
         File flag = new File (path + "-ready");
         File updated = new File (path + "-updated");
         if (db == null || (flag.exists () && updated.exists ())) {
@@ -418,11 +417,20 @@ class BibDB
      *                 for use in the browse display
      * @return         return a map of Solr ids and extra bib info
      */
-    public Map<String, List<Collection<String>>> matchingIDs (String heading, String extras)
+    public Map<String, List<Collection<String>>> matchingIDs (String heading, String extras, String filterBy)
         throws Exception
     {
-        TermQuery q = new TermQuery (new Term (field, heading));
-
+        Query q;
+        if (filterBy != null) {
+            TermQuery tq = new TermQuery (new Term (field, heading));
+            TermQuery fq = new TermQuery (new Term (filterBy, "T"));
+            BooleanQuery.Builder qb = new BooleanQuery.Builder();
+            qb.add(tq, BooleanClause.Occur.MUST);
+            qb.add(fq, BooleanClause.Occur.MUST);
+            q = qb.build();
+        } else {
+            q = new TermQuery (new Term (field, heading));     
+        }
 	// bibinfo values are List<Collection> because some extra fields 
 	// may be multi-valued.
 	// Note: it may be time for bibinfo to become a class...
@@ -587,9 +595,9 @@ class Browse
     }
 
 
-    private void populateItem (BrowseItem item, String extras) throws Exception
+    private void populateItem (BrowseItem item, String extras, String filterBy) throws Exception
     {
-        Map<String, List<Collection<String>>> bibinfo = bibDB.matchingIDs (item.heading, extras);
+        Map<String, List<Collection<String>>> bibinfo = bibDB.matchingIDs (item.heading, extras, filterBy);
         //item.ids = bibinfo.get ("ids");
 	item.setIds (bibinfo.get ("ids"));
         bibinfo.remove ("ids");
@@ -623,7 +631,7 @@ class Browse
     }
 
 
-    public BrowseList getList (int rowid, int offset, int rows, String extras)
+    public BrowseList getList (int rowid, int offset, int rows, String extras, String filterBy)
         throws Exception
     {
         BrowseList result = new BrowseList ();
@@ -639,7 +647,7 @@ class Browse
 
             BrowseItem item = new BrowseItem (sort_key, heading);
 
-            populateItem (item, extras);
+            populateItem (item, extras, filterBy);
 
             result.items.add (item);
         }
@@ -837,6 +845,7 @@ public class BrowseRequestHandler extends RequestHandlerBase
         String sourceName = p.get ("source");
         String from = p.get ("from");
         String extras = p.get ("extras");
+        String filterBy = p.get("filterBy");
 
         // extras needs to be a non-null string
 	if (extras == null) {
@@ -872,19 +881,16 @@ public class BrowseRequestHandler extends RequestHandlerBase
 
         try {
             SolrIndexSearcher authSearcher = authSearcherRef.get();
-
             synchronized (this) {
-                if (source.browse == null) {
-                    source.browse = (new Browse
-                            (new HeadingsDB (source.DBpath, source.normalizer),
-                                    new AuthDB
-                                    (authSearcher,
-                                            solrParams.get ("preferredHeadingField"),
-                                            solrParams.get ("useInsteadHeadingField"),
-                                            solrParams.get ("seeAlsoHeadingField"),
-                                            solrParams.get ("scopeNoteField"))));
-                    Log.info("new browse source with HeadingsDB (" + source.DBpath + ", " + source.normalizer + ")");
-                }
+                source.browse = (new Browse
+                        (new HeadingsDB (source.DBpath, source.normalizer, filterBy),
+                                new AuthDB
+                                (authSearcher,
+                                        solrParams.get ("preferredHeadingField"),
+                                        solrParams.get ("useInsteadHeadingField"),
+                                        solrParams.get ("seeAlsoHeadingField"),
+                                        solrParams.get ("scopeNoteField"))));
+                Log.info("new browse source with HeadingsDB (" + source.DBpath + ", " + source.normalizer + ")");
 
                 source.browse.setBibDB (new BibDB (req.getSearcher (),
                         source.field));
@@ -900,7 +906,7 @@ public class BrowseRequestHandler extends RequestHandlerBase
 
                 Log.info ("Browsing from: " + rowid);
 
-                BrowseList list = source.browse.getList (rowid, offset, rows, extras);
+                BrowseList list = source.browse.getList (rowid, offset, rows, extras, filterBy);
 
                 Map<String,Object> result = new HashMap<String, Object> ();
 
