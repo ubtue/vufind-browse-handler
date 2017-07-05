@@ -420,7 +420,6 @@ class BibDB
     public Map<String, List<Collection<String>>> matchingIDs (String heading, String extras, String filterBy)
         throws Exception
     {
-System.err.println("matchingIDs: filterBy: "  + filterBy);
         Query q;
         if (filterBy != null) {
             TermQuery tq = new TermQuery (new Term (field, heading));
