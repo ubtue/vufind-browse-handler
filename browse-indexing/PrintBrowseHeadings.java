@@ -161,9 +161,6 @@ public class PrintBrowseHeadings
 
         IndexReader bibReader = DirectoryReader.open (FSDirectory.open (new File (bibPath).toPath ()));
         bibSearcher = new IndexSearcher (bibReader);
-
-        outFile = (filter != null) ? (outFile + "/" + filter) : outFile;
-System.err.println("OUTFILE: " + outFile);
         PrintWriter out = new PrintWriter (new FileWriter (outFile));
 
         if (authPath != null) {
@@ -216,7 +213,7 @@ System.err.println("OUTFILE: " + outFile);
             System.err.println("\nor:\n");
             System.err.println
                 ("Usage: PrintBrowseHeadings <bib index> <bib field>"
-                 + "<auth index> <out file> <filter>");
+                 + " <auth index> <out file> <filter>");
 
             System.exit (0);
         }
@@ -224,7 +221,9 @@ System.err.println("OUTFILE: " + outFile);
         PrintBrowseHeadings self = new PrintBrowseHeadings ();
 
         if (args.length == 5) {
-            self.create (args[0], args[1], args[2], args[3], args[4]);
+            String authPath = (args[2] == null || args[2].isEmpty()) ? null : args[2];
+            String filter = (args[4] == null || args[4].isEmpty()) ? null : args[4];
+            self.create (args[0], args[1], authPath, args[3], filter);
         } else if (args.length == 4) {
             self.create (args[0], args[1], args[2], args[3], null);
         } else {

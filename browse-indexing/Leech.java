@@ -4,51 +4,9 @@ import org.apache.lucene.search.*;
 import java.io.*;
 import java.util.*;
 import java.util.logging.Logger;
-
-
 import org.vufind.util.BrowseEntry;
 import org.vufind.util.Normalizer;
 import org.vufind.util.NormalizerFactory;
-
-
-class MyLog
-{
-    private static Logger log ()
-    {
-        // Caller's class
-        return Logger.getLogger
-            (new Throwable ().getStackTrace ()[2].getClassName ());
-    }
-
-
-    public static String formatBytes(byte[] bytes) {
-        StringBuilder result = new StringBuilder ();
-
-        for (int i = 0; i < bytes.length; i++) {
-            if (i > 0) {
-                result.append (", ");
-            }
-            result.append ("0x");
-            result.append (Integer.toHexString (bytes[i]));
-        }
-
-        return result.toString();
-    }
-
-
-    public static String formatBytes(String s) {
-        try {
-            return formatBytes(s.getBytes("UTF-8"));
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
-    }
-    public static void info (String s) { log ().info (s); }
-
-    public static void info (String fmt, String s) {
-        log ().info (String.format (fmt, s));
-    }
-}
 
 
 public class Leech
@@ -115,8 +73,6 @@ public class Leech
             else {
                 q = new TermQuery (new Term (this.field, t));
             }
-
-MyLog.info("WE ARE IN TERM EXISTS:" + q.toString());
                
             return (this.searcher.search (new ConstantScoreQuery(q),
                                           1).totalHits > 0);
@@ -154,10 +110,8 @@ MyLog.info("WE ARE IN TERM EXISTS:" + q.toString());
             String termText = tenum.term().utf8ToString();
 
             if (termExists(termText)) {
-MyLog.info("Term exists....");
                 return new BrowseEntry (buildSortKey (termText), termText, termText) ;
             } else {
-MyLog.info("Term does not exist");
                 return this.next();
             }
         } else {
