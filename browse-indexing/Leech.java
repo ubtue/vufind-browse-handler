@@ -69,8 +69,7 @@ public class Leech
                 qb.add(tq, BooleanClause.Occur.MUST);
                 qb.add(fq, BooleanClause.Occur.MUST);
                 q = qb.build();
-            }
-            else {
+            } else {
                 q = new TermQuery (new Term (this.field, t));
             }
                
