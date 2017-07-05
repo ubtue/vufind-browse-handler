@@ -428,8 +428,7 @@ class BibDB
             qb.add(tq, BooleanClause.Occur.MUST);
             qb.add(fq, BooleanClause.Occur.MUST);
             q = qb.build();
-        }
-        else {
+        } else {
             q = new TermQuery (new Term (field, heading));     
         }
 	// bibinfo values are List<Collection> because some extra fields 
