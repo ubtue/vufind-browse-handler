@@ -54,7 +54,7 @@ public class StoredFieldLeech extends Leech
         String[] value = doc.getValues (valueField);
         if (filter != null) {
             String filterValue = doc.get(filter);
-            if (!filterValue.equals("T")) {
+            if (filterValue == null || !filterValue.equals("T")) {
                 return;
             }
         }
