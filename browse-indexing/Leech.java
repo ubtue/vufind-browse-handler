@@ -3,7 +3,7 @@ import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 import java.io.*;
 import java.util.*;
-import java.util.logging.Logger;
+
 import org.vufind.util.BrowseEntry;
 import org.vufind.util.Normalizer;
 import org.vufind.util.NormalizerFactory;
