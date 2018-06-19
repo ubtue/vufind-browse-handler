@@ -678,9 +678,9 @@ class BrowseSource
 
     // Get a HeadingsDB instance.  Caller is expected to call `queryFinished` on
     // this when done with the instance.
-    public synchronized HeadingsDB getHeadingsDB() {
+    public synchronized HeadingsDB getHeadingsDB(String filterBy) {
         if (headingsDB == null) {
-            headingsDB = new HeadingsDB (this.DBpath, this.normalizer);
+            headingsDB = new HeadingsDB (this.DBpath, this.normalizer, filterBy);
         }
 
         // If no queries are running, it's a safepoint to reopen the browse index.
@@ -904,7 +904,7 @@ public class BrowseRequestHandler extends RequestHandlerBase
         HeadingsDB headingsDB = null;
 
         try {
-            headingsDB = source.getHeadingsDB();
+            headingsDB = source.getHeadingsDB(filterBy);
             SolrIndexSearcher authSearcher = authSearcherRef.get();
 
             Browse browse = new Browse(headingsDB,
