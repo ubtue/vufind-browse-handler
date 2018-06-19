@@ -25,13 +25,13 @@ public class StoredFieldLeech extends Leech
     {
         super (indexPath, field, filter);
 
-        sortField = Utils.getEnvironment ("SORTFIELD");
-        valueField = Utils.getEnvironment ("VALUEFIELD");
+        sortField = Utils.getEnvironment("SORTFIELD");
+        valueField = Utils.getEnvironment("VALUEFIELD");
 
         if (sortField == null || valueField == null) {
-            throw new IllegalArgumentException ("Both SORTFIELD and " +
-                                                "VALUEFIELD environment " +
-                                                "variables must be set.");
+            throw new IllegalArgumentException("Both SORTFIELD and " +
+                                               "VALUEFIELD environment " +
+                                               "variables must be set.");
         }
 
         fieldSelection = new HashSet<String>();
@@ -40,15 +40,15 @@ public class StoredFieldLeech extends Leech
         fieldSelection.add("id");   // make Solr id available for error messages
         fieldSelection.add(filter);
 
-        reader = DirectoryReader.open (FSDirectory.open (new File (indexPath).toPath ()));
+        reader = DirectoryReader.open(FSDirectory.open(new File(indexPath).toPath()));
         buffer = new LinkedList<BrowseEntry> ();
     }
 
 
-    private void loadDocument (IndexReader reader, int docid)
-        throws Exception
+    private void loadDocument(IndexReader reader, int docid)
+    throws Exception
     {
-        Document doc = reader.document (currentDoc, fieldSelection);
+        Document doc = reader.document(currentDoc, fieldSelection);
 
         String[] sort_key = doc.getValues (sortField);
         String[] value = doc.getValues (valueField);
@@ -60,9 +60,9 @@ public class StoredFieldLeech extends Leech
         }
         if (sort_key.length == value.length) {
             for (int i = 0; i < value.length; i++) {
-                buffer.add (new BrowseEntry(buildSortKey(sort_key[i]),
-                                            sort_key[i],
-                                            value[i]));
+                buffer.add(new BrowseEntry(buildSortKey(sort_key[i]),
+                                           sort_key[i],
+                                           value[i]));
             }
         } else {
             String id = null;
@@ -84,16 +84,16 @@ public class StoredFieldLeech extends Leech
 
     public BrowseEntry next() throws Exception
     {
-        while (buffer.isEmpty ()) {
-            if (currentDoc < reader.maxDoc ()) {
-                loadDocument (reader, currentDoc);
+        while (buffer.isEmpty()) {
+            if (currentDoc < reader.maxDoc()) {
+                loadDocument(reader, currentDoc);
                 currentDoc++;
             } else {
                 return null;
             }
         }
 
-        return buffer.remove ();
+        return buffer.remove();
     }
 }
 

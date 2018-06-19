@@ -28,37 +28,36 @@ public class Leech
     {
         // Open our composite reader (a top-level DirectoryReader that
         // contains one reader per segment in our index).
-        reader = DirectoryReader.open (FSDirectory.open (new File (indexPath).toPath ()));
+        reader = DirectoryReader.open(FSDirectory.open(new File(indexPath).toPath()));
 
         // Open the searcher that we'll use to verify that items are
         // being used by a non-deleted document.
-        searcher = new IndexSearcher (reader);
+        searcher = new IndexSearcher(reader);
 
         // Extract the list of readers for our underlying segments.
         // We'll work through these one at a time until we've consumed them all.
         leafReaders = new ArrayList<>(reader.getContext().leaves());
 
         this.field = field;
-        this.filter = filter;
 
         String normalizerClass = System.getProperty("browse.normalizer");
         normalizer = NormalizerFactory.getNormalizer(normalizerClass);
     }
 
 
-    public byte[] buildSortKey (String heading)
+    public byte[] buildSortKey(String heading)
     {
-        return normalizer.normalize (heading);
+        return normalizer.normalize(heading);
     }
 
 
-    public void dropOff () throws IOException
+    public void dropOff() throws IOException
     {
-        reader.close ();
+        reader.close();
     }
 
 
-    private boolean termExists (String t)
+    private boolean termExists(String t)
     {
         try {
             Query q;
@@ -85,7 +84,7 @@ public class Leech
     //
     // If there's no currently selected TermEnum, create one from the reader.
     //
-    public BrowseEntry next () throws Exception
+    public BrowseEntry next() throws Exception
     {
         if (tenum == null) {
             if (leafReaders.isEmpty()) {
@@ -109,14 +108,14 @@ public class Leech
             String termText = tenum.term().utf8ToString();
 
             if (termExists(termText)) {
-                return new BrowseEntry (buildSortKey (termText), termText, termText) ;
+                return new BrowseEntry(buildSortKey(termText), termText, termText) ;
             } else {
                 return this.next();
             }
         } else {
             // Exhausted this reader
             tenum = null;
-            return null;
+            return next();
         }
     }
 }
