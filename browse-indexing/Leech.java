@@ -39,6 +39,7 @@ public class Leech
         leafReaders = new ArrayList<>(reader.getContext().leaves());
 
         this.field = field;
+        this.filter = filter;
 
         String normalizerClass = System.getProperty("browse.normalizer");
         normalizer = NormalizerFactory.getNormalizer(normalizerClass);
