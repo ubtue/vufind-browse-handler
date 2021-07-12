@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/vufind-org/vufind-browse-handler.svg?branch=master)](https://travis-ci.org/vufind-org/vufind-browse-handler)
+[![CI Status](https://github.com/vufind-org/vufind-browse-handler/actions/workflows/ci.yaml/badge.svg?branch=dev)](https://github.com/vufind-org/vufind-browse-handler/actions/workflows/ci.yaml)
 
 Care and feeding of the VuFind Solr browse request handler
 ==========================================================
@@ -155,3 +155,8 @@ simple:
 Running the unit tests:
 
     ant test -Dvufind.dir=/usr/local/vufind
+
+Coding style is One True Brace style. In astyle:
+
+    astyle --mode=java --style=1tbs -U -H -I -R 'browse-handler/*' 'browse-indexing/*' 'common/*' 'tests/org/*'
+
