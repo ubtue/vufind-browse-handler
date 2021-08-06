@@ -54,7 +54,7 @@ public class BibDB
     public int recordCount(String heading, String filterBy)
     throws IOException
     {
-    	Query q;
+        Query q;
         if (filterBy != null) {
             TermQuery tq = new TermQuery (new Term (this.field, heading));
             TermQuery fq = new TermQuery (new Term (filterBy, "T"));
