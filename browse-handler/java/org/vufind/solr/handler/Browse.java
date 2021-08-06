@@ -31,13 +31,13 @@ class Browse
         Map<String, List<Collection<String>>> bibinfo =
             bibDB.matchingExtras(item.getHeading(), fields, maxBibListSize, filterBy);
         item.setExtras(bibinfo);
-        item.setCount(bibDB.recordCount(item.getHeading()));
+        item.setCount(bibDB.recordCount(item.getHeading(), filterBy));
 
         Map<String, List<String>> authFields = authDB.getFields(item.getHeading());
 
         List<String> seeAlsoList = new ArrayList<String>();
         for (String value : authFields.get("seeAlso")) {
-            if (bibDB.recordCount(value) > 0) {
+            if (bibDB.recordCount(value, filterBy) > 0) {
                 seeAlsoList.add(value);
             }
         }
@@ -45,7 +45,7 @@ class Browse
 
         List<String> useInsteadList = new ArrayList<String>();
         for (String value : authFields.get("useInstead")) {
-            if (bibDB.recordCount(value) > 0) {
+            if (bibDB.recordCount(value, filterBy) > 0) {
                 useInsteadList.add(value);
             }
         }

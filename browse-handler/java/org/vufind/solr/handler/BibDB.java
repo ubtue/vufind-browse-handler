@@ -51,10 +51,20 @@ public class BibDB
      * @return	number of matching bib records
      * @throws Exception
      */
-    public int recordCount(String heading)
+    public int recordCount(String heading, String filterBy)
     throws IOException
     {
-        TermQuery q = new TermQuery(new Term(field, heading));
+        Query q;
+        if (filterBy != null) {
+            TermQuery tq = new TermQuery (new Term (this.field, heading));
+            TermQuery fq = new TermQuery (new Term (filterBy, "T"));
+            BooleanQuery.Builder qb = new BooleanQuery.Builder();
+            qb.add(tq, BooleanClause.Occur.MUST);
+            qb.add(fq, BooleanClause.Occur.MUST);
+            q = qb.build();
+        } else {
+            q = new TermQuery (new Term (this.field, heading));
+        }
 
         TotalHitCountCollector counter = new TotalHitCountCollector();
         db.search(q, counter);
