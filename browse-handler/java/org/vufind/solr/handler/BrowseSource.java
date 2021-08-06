@@ -1,5 +1,8 @@
 package org.vufind.solr.handler;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Provide access to the on-disk SQLite browse index.
  *
@@ -13,7 +16,7 @@ class BrowseSource
     public boolean retrieveBibId;
     public int maxBibListSize;
 
-    private HeadingsDB headingsDB = null;
+    private Map<String,HeadingsDB> headingsDBs = new HashMap<>();
     private long loanCount = 0;
 
 
@@ -34,10 +37,16 @@ class BrowseSource
 
     // Get a HeadingsDB instance.  Caller is expected to call `queryFinished` on
     // this when done with the instance.
-    public synchronized HeadingsDB getHeadingsDB(String filterBy)
-    {
+    public synchronized HeadingsDB getHeadingsDB(String filterBy) {
+        String mapFilter = filterBy;
+        if (mapFilter == null || mapFilter.isEmpty()) {
+            mapFilter = "global";
+        }
+        HeadingsDB headingsDB = headingsDBs.get(mapFilter);
+
         if (headingsDB == null) {
             headingsDB = new HeadingsDB(this.DBpath, this.normalizer, filterBy);
+            headingsDBs.put(mapFilter, headingsDB);
         }
 
         // If no queries are running, it's a safe point to reopen the browse index.
