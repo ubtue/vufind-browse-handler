@@ -72,9 +72,9 @@ public class Leech
             } else {
                 q = new TermQuery (new Term (this.field, t));
             }
-               
+
             return (this.searcher.search (new ConstantScoreQuery(q),
-                                          1).totalHits > 0);
+                                         1).totalHits.value > 0);
         } catch (IOException e) {
             return false;
         }
