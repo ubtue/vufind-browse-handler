@@ -113,7 +113,7 @@ public class BibDBTest
         IndexSearcher searcher = searcherRef.get();
         BibDB bibDbForTitle = new BibDB(searcher, "title_fullStr");
         try {
-            assertEquals(titleCount, bibDbForTitle.recordCount(title));
+            assertEquals(titleCount, bibDbForTitle.recordCount(title, null));
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -135,7 +135,7 @@ public class BibDBTest
         IndexSearcher searcher = searcherRef.get();
         try {
             BibDB bibDbForTitle = new BibDB(searcher, "title_fullStr");
-            List<String> ids = bibDbForTitle.matchingIDs(title, "id", 10).get("id")
+            List<String> ids = bibDbForTitle.matchingIDs(title, "id", 10, null).get("id")
                                .stream()
                                .flatMap(Collection::stream)
                                .collect(Collectors.toList());
@@ -163,7 +163,7 @@ public class BibDBTest
         IndexSearcher searcher = searcherRef.get();
         try {
             BibDB bibDbForTitle = new BibDB(searcher, "title_fullStr");
-            Map<String, List<Collection<String>>> extrasMap = bibDbForTitle.matchingExtras(title, extras, maxBibs);
+            Map<String, List<Collection<String>>> extrasMap = bibDbForTitle.matchingExtras(title, extras, maxBibs, null);
             List<String> ids = extrasMap.get("id")
                                .stream()
                                .flatMap(Collection::stream)
@@ -196,7 +196,7 @@ public class BibDBTest
         IndexSearcher searcher = searcherRef.get();
         try {
             BibDB bibDbForTitle = new BibDB(searcher, "title_fullStr");
-            List<String> ids = bibDbForTitle.matchingExtras(title, "id", maxBibs).get("id")
+            List<String> ids = bibDbForTitle.matchingExtras(title, "id", maxBibs, null).get("id")
                                .stream()
                                .flatMap(Collection::stream)
                                .collect(Collectors.toList());
@@ -222,7 +222,7 @@ public class BibDBTest
         IndexSearcher searcher = searcherRef.get();
         try {
             BibDB bibDbForTitle = new BibDB(searcher, "title_fullStr");
-            List<String> ids = bibDbForTitle.matchingExtras(title, "id", maxBibs).get("id")
+            List<String> ids = bibDbForTitle.matchingExtras(title, "id", maxBibs, null).get("id")
                                .stream()
                                .flatMap(Collection::stream)
                                .collect(Collectors.toList());
@@ -247,7 +247,7 @@ public class BibDBTest
         IndexSearcher searcher = searcherRef.get();
         try {
             BibDB bibDbForTitle = new BibDB(searcher, "title_fullStr");
-            assertNull(bibDbForTitle.matchingExtras(title, null, 0));
+            assertNull(bibDbForTitle.matchingExtras(title, null, 0, null));
         } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -271,7 +271,7 @@ public class BibDBTest
         IndexSearcher searcher = searcherRef.get();
         try {
             BibDB bibDbForTitle = new BibDB(searcher, "title_fullStr");
-            Map<String, Collection<String>> extrasMap = bibDbForTitle.matchingFields(title, extras, maxBibs);
+            Map<String, Collection<String>> extrasMap = bibDbForTitle.matchingFields(title, extras, maxBibs, null);
             Collection<String> ids = extrasMap.get("id");
             //Log.info("extrasMap: %s", extrasMap);
             //Log.info("ids: %s", ids);
@@ -302,7 +302,7 @@ public class BibDBTest
         IndexSearcher searcher = searcherRef.get();
         try {
             BibDB bibDbForTitle = new BibDB(searcher, "title_fullStr");
-            Collection<String> ids = bibDbForTitle.matchingFields(title, "id", maxBibs).get("id");
+            Collection<String> ids = bibDbForTitle.matchingFields(title, "id", maxBibs, null).get("id");
             assertEquals(idCount, ids.size());
         } catch (Exception e) {
             // TODO Auto-generated catch block
@@ -325,7 +325,7 @@ public class BibDBTest
         IndexSearcher searcher = searcherRef.get();
         try {
             BibDB bibDbForTitle = new BibDB(searcher, "title_fullStr");
-            Collection<String> ids = bibDbForTitle.matchingFields(title, "id", maxBibs).get("id");
+            Collection<String> ids = bibDbForTitle.matchingFields(title, "id", maxBibs, null).get("id");
             assertEquals(maxBibs, ids.size());
         } catch (Exception e) {
             // TODO Auto-generated catch block
@@ -347,7 +347,7 @@ public class BibDBTest
         IndexSearcher searcher = searcherRef.get();
         try {
             BibDB bibDbForTitle = new BibDB(searcher, "title_fullStr");
-            assertNull(bibDbForTitle.matchingFields(title, null, 0));
+            assertNull(bibDbForTitle.matchingFields(title, null, 0, null));
         } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
