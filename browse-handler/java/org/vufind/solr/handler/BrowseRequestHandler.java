@@ -9,6 +9,7 @@ package org.vufind.solr.handler;
 
 import java.net.URL;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,6 +22,7 @@ import org.apache.solr.core.SolrCore;
 import org.apache.solr.handler.RequestHandlerBase;
 import org.apache.solr.request.SolrRequestHandler;
 import org.apache.solr.search.SolrIndexSearcher;
+import org.apache.solr.security.AuthorizationContext;
 import org.apache.solr.util.RefCounted;
 import org.vufind.util.NormalizerFactory;
 
@@ -153,6 +155,15 @@ public class BrowseRequestHandler extends RequestHandlerBase
         CoreDescriptor cd = core.getCoreDescriptor();
         CoreContainer cc = core.getCoreContainer();
         SolrCore authCore = cc.getCore(authCoreName);
+        if (authCore == null) {
+            Collection<String> names = cc.getAllCoreNames();
+            String name = names.stream().filter(n -> n.startsWith(authCoreName)).findFirst().orElse(null);
+            if (name == null)
+                throw new Exception("Could not find a core with a name starting with " + authCoreName);
+            authCore = cc.getCore(name);
+            if (authCore == null)
+                throw new Exception("Could not get the core with the name " + name);
+        }
         //Must decrement RefCounted when finished!
         RefCounted<SolrIndexSearcher> authSearcherRef = authCore.getSearcher();
 
@@ -229,5 +240,9 @@ public class BrowseRequestHandler extends RequestHandlerBase
     public URL[] getDocs()
     {
         return null;
+    }
+
+    public Name getPermissionName(AuthorizationContext request) {
+        return Name.ALL;
     }
 }
