@@ -10,6 +10,9 @@
   <property name="vufind.dir" value="/usr/local/vufind"/>
   <property name="absolute.vufind.dir" location="${vufind.dir}"/>
   <property name="solr.solr.home" value="${absolute.vufind.dir}/solr/vufind"/>
+  <!-- The solr.install.dir property was added to work around an issue in the Solr 9.1 test suite;
+       it can probably be safely removed once VuFind upgrades to Solr 9.2 or higher. -->
+  <property name="solr.install.dir" value="${absolute.vufind.dir}/solr/vendor"/>
   <property name="java.compat.version" value="1.8"/>
   <property name="ant.build.javac.source" value="1.8"/>
   <property name="ant.build.javac.target" value="1.8"/>
@@ -22,13 +25,24 @@
     <fileset dir="libs">
       <include name="**/*.jar"/>
     </fileset>
+    <fileset dir="tests/lib">
+      <include name="**/*.jar"/>
+    </fileset>
+    <!-- For Solr 8 and below: -->
     <fileset erroronmissingdir="false" dir="${absolute.vufind.dir}/solr/vendor/contrib/analysis-extras">
+      <include name="**/*.jar"/>
+    </fileset>
+    <!-- For Solr 9 and above: -->
+    <fileset erroronmissingdir="false" dir="${absolute.vufind.dir}/solr/vendor/modules/analysis-extras">
       <include name="**/*.jar"/>
     </fileset>
     <fileset erroronmissingdir="false" dir="${absolute.vufind.dir}/solr/vendor/dist">
       <include name="**/*.jar"/>
     </fileset>
     <fileset erroronmissingdir="false" dir="${absolute.vufind.dir}/solr/vendor/server/solr-webapp/webapp/WEB-INF/lib">
+      <include name="**/*.jar"/>
+    </fileset>
+    <fileset erroronmissingdir="false" dir="${absolute.vufind.dir}/import/lib">
       <include name="**/*.jar"/>
     </fileset>
     <!-- Needed for building tests that invoke Solr -->
@@ -181,8 +195,8 @@
       </exec>
     </target>
 
-  <!-- ================================= 
-          target: test-main              
+  <!-- =================================
+          target: test-main
          ================================= -->
     <target name="test-main"
       description="Run tests, assumes build is current and test cores are set up">
@@ -194,9 +208,10 @@
         <compilerarg line="-encoding UTF-8" />
       </javac>
 
-      <junit showoutput="yes" fork="true">
+      <junit showoutput="yes" fork="true" haltonfailure="on">
         <sysproperty key="absolute.vufind.dir" value="${absolute.vufind.dir}" />
         <sysproperty key="solr.solr.home" value="${solr.solr.home}" />
+        <sysproperty key="solr.install.dir" value="${solr.install.dir}" />
         <jvmarg value="-Dfile.encoding=UTF-8" />
         <classpath>
           <pathelement location="tests/lib/junit-4.11.jar"/>
@@ -227,16 +242,16 @@
 
     </target>
 
-  <!-- ================================= 
-          target: test              
+  <!-- =================================
+          target: test
          ================================= -->
     <target name="test" depends="build, setup-test-cores"
       description="Run tests after build and setting up the test cores">
         <antcall target="test-main"/>
     </target>
 
-  <!-- ================================= 
-          target: test-skip-setup              
+  <!-- =================================
+          target: test-skip-setup
          ================================= -->
     <target name="test-skip-setup" depends="build"
       description="Run tests after build, assumes test cores are already set up">
