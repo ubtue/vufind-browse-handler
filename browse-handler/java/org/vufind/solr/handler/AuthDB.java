@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.StoredFields;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
@@ -61,7 +62,7 @@ public class AuthDB
                                            1));
 
         if (results.totalHits.value > 0) {
-            return searcher.getIndexReader().document(results.scoreDocs[0].doc);
+            return searcher.getIndexReader().storedFields().document(results.scoreDocs[0].doc);
         } else {
             return null;
         }
@@ -77,8 +78,9 @@ public class AuthDB
 
         List<Document> result = new ArrayList<> ();
 
+        StoredFields storedFields = searcher.getIndexReader().storedFields();
         for (int i = 0; i < results.totalHits.value; i++) {
-            result.add(searcher.getIndexReader().document(results.scoreDocs[i].doc));
+            result.add(storedFields.document(results.scoreDocs[i].doc));
         }
 
         return result;
