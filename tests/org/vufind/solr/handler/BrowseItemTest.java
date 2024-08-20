@@ -92,33 +92,6 @@ public class BrowseItemTest
     }
 
     @Test
-    public void testSetIds()
-    {
-        Collection<String> ids1 = new ArrayList<String>();
-        ids1.add("id-1");
-        ids1.add("id-2");
-
-        Collection<String> ids2 = new ArrayList<String>();
-        ids2.add("id-3");
-
-        // This is what we expect to store, a list containing all IDs
-        List<String> allIds = new ArrayList<String>();
-        allIds.addAll(ids1);
-        allIds.addAll(ids2);
-
-        // This is what setIds expects, a list of collections
-        List<Collection<String>> idList = new ArrayList<Collection<String>>();
-        idList.add(ids1);
-        idList.add(ids2);
-
-        BrowseItem item = new BrowseItem("", "");
-        item.setIds(idList);
-
-        // IDs are stored as the concatenation of the list of collections
-        assertEquals(allIds, item.get("ids"));
-    }
-
-    @Test
     public void testSetExtras()
     {
         Collection<String> format1 = new ArrayList<>();
@@ -153,13 +126,13 @@ public class BrowseItemTest
         int count = 37;
         BrowseItem item = new BrowseItem("", "");
         item.setCount(count);
-        assertEquals(new Integer(count), item.get("count"));
+        assertEquals(Integer.valueOf(count), item.get("count"));
     }
 
     @Test
     public void testSetCountInteger()
     {
-        Integer count = new Integer(87);
+        Integer count = Integer.valueOf(87);
         BrowseItem item = new BrowseItem("", "");
         item.setCount(count);
         assertEquals(count, item.get("count"));
@@ -215,30 +188,6 @@ public class BrowseItemTest
     }
 
     @Test
-    public void testGetIds()
-    {
-        Collection<String> ids1 = new ArrayList<String>();
-        ids1.add("id-1");
-        Collection<String> ids2 = new ArrayList<String>();
-        ids1.add("id-2");
-        // This is what we expect to store, a list containing all IDs
-        List<String> allIds = new ArrayList<String>();
-        allIds.addAll(ids1);
-        allIds.addAll(ids2);
-
-        // This is what setIds expects, a list of collections
-        List<Collection<String>> idList = new ArrayList<Collection<String>>();
-        idList.add(ids1);
-        idList.add(ids2);
-
-        BrowseItem item = new BrowseItem("", "");
-        item.setIds(idList);
-
-        // IDs are stored as the concatenation of the list of collections
-        assertEquals(allIds, item.getIds());
-    }
-
-    @Test
     public void testGetExtras()
     {
         Collection<String> format1 = new ArrayList<>();
@@ -280,7 +229,7 @@ public class BrowseItemTest
     @Test
     public void testGetCount()
     {
-        Integer count = new Integer(87);
+        Integer count = Integer.valueOf(87);
         BrowseItem item = new BrowseItem("", "");
         item.setCount(count);
         assertEquals(count, item.getCount());

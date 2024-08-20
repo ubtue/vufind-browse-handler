@@ -1,29 +1,40 @@
+package org.vufind.solr.indexing;
+
 // Build a browse list by walking the docs in an index and extracting sort key
 // and values from a pair of stored fields.
+import java.io.File;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Set;
 
-import java.io.*;
-import java.util.*;
-import org.apache.lucene.store.*;
-import org.apache.lucene.index.*;
-import org.apache.lucene.document.*;
-
-import org.vufind.util.Utils;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.index.MultiBits;
+import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.util.Bits;
 import org.vufind.util.BrowseEntry;
+import org.vufind.util.Utils;
 
-public class StoredFieldLeech extends Leech
+public class StoredFieldIterator extends SolrFieldIterator
 {
     int currentDoc = 0;
     LinkedList<BrowseEntry> buffer;
 
     String sortField;
     String valueField;
+    String filter;
 
     private Set<String> fieldSelection;
 
+    private Bits liveDocsBitSet;
 
-    public StoredFieldLeech (String indexPath, String field, String filter) throws Exception
+    public StoredFieldIterator(String indexPath, String field, String filter) throws Exception
     {
-        super (indexPath, field, filter);
+        super (indexPath, field);
+        this.filter = filter;
 
         sortField = Utils.getEnvironment("SORTFIELD");
         valueField = Utils.getEnvironment("VALUEFIELD");
@@ -41,12 +52,15 @@ public class StoredFieldLeech extends Leech
         fieldSelection.add(filter);
 
         reader = DirectoryReader.open(FSDirectory.open(new File(indexPath).toPath()));
+
+        // Will be null if the index contains no deletes.
+        liveDocsBitSet = MultiBits.getLiveDocs(reader);
+
         buffer = new LinkedList<BrowseEntry> ();
     }
 
 
-    private void loadDocument(IndexReader reader, int docid)
-    throws Exception
+    private void loadDocument(IndexReader reader, int docid) throws IOException
     {
         Document doc = reader.storedFields().document(currentDoc, fieldSelection);
 
@@ -82,11 +96,13 @@ public class StoredFieldLeech extends Leech
     }
 
 
-    public BrowseEntry next() throws Exception
+    protected BrowseEntry readNext() throws IOException
     {
         while (buffer.isEmpty()) {
             if (currentDoc < reader.maxDoc()) {
-                loadDocument(reader, currentDoc);
+                if (this.liveDocsBitSet == null || this.liveDocsBitSet.get(currentDoc)) {
+                    loadDocument(reader, currentDoc);
+                }
                 currentDoc++;
             } else {
                 return null;
