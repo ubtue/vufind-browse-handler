@@ -135,7 +135,7 @@ public class PrintBrowseHeadings
     }
 
 
-    private SolrFieldIterator getBibIterator(String bibPath, String luceneField)
+    private SolrFieldIterator getBibIterator(String bibPath, String luceneField, String filter)
         throws Exception
     {
         String fieldIteratorClass = "org.vufind.solr.indexing.SolrFieldIterator";
@@ -170,18 +170,19 @@ public class PrintBrowseHeadings
         }
 
         return (SolrFieldIterator)(Class.forName(fieldIteratorClass)
-                       .getConstructor(String.class, String.class)
-                       .newInstance(bibPath, luceneField));
+                       .getConstructor(String.class, String.class, String.class)
+                       .newInstance(bibPath, luceneField, filter));
     }
 
 
     public void create(String bibPath,
                        String luceneField,
                        String authPath,
-                       String outFile)
+                       String outFile,
+                       String filter)
     throws Exception
     {
-        try (SolrFieldIterator bibFieldIterator = getBibIterator(bibPath, luceneField)) {
+        try (SolrFieldIterator bibFieldIterator = getBibIterator(bibPath, luceneField, filter)) {
             this.luceneField = luceneField;
 
             IndexReader bibReader = DirectoryReader.open(FSDirectory.open(new File(bibPath).toPath()));
@@ -192,7 +193,8 @@ public class PrintBrowseHeadings
                     try {
                         nonprefAuthFieldIterator = new SolrFieldIterator(authPath,
                                                                          System.getProperty("field.insteadof",
-                                                                                            "insteadOf"));
+                                                                                            "insteadOf"),
+                                                                         filter);
                     } catch (IndexNotFoundException e) {
                         // If no data has been written to the index yet, this exception
                         // might get thrown; in that case, we should skip loading authority
@@ -215,8 +217,7 @@ public class PrintBrowseHeadings
                                                  return true;
                                              }
                                          }
-                                     }
-                                     );
+                                     });
 
                         nonprefAuthFieldIterator.close();
                     }
@@ -231,7 +232,7 @@ public class PrintBrowseHeadings
     public static void main(String args[])
     throws Exception
     {
-        if (args.length != 3 && args.length != 4) {
+        if (args.length != 3 && args.length != 4 && args.length != 5) {
             System.err.println
             ("Usage: PrintBrowseHeadings <bib index> <bib field> "
              + "<auth index> <out file>");
@@ -239,16 +240,24 @@ public class PrintBrowseHeadings
             System.err.println
             ("Usage: PrintBrowseHeadings <bib index> <bib field>"
              + " <out file>");
+            System.err.println("\nor:\n");
+            System.err.println
+                ("Usage: PrintBrowseHeadings <bib index> <bib field>"
+                 + " <auth index> <out file> <filter>");
 
             System.exit(0);
         }
 
         PrintBrowseHeadings self = new PrintBrowseHeadings();
 
-        if (args.length == 4) {
-            self.create(args[0], args[1], args[2], args[3]);
+        if (args.length == 5) {
+            String authPath = (args[2] == null || args[2].isEmpty()) ? null : args[2];
+            String filter = (args[4] == null || args[4].isEmpty()) ? null : args[4];
+            self.create (args[0], args[1], authPath, args[3], filter);
+        } else if (args.length == 4) {
+            self.create(args[0], args[1], args[2], args[3], null);
         } else {
-            self.create(args[0], args[1], null, args[2]);
+            self.create(args[0], args[1], null, args[2], null);
         }
     }
 }

@@ -32,6 +32,7 @@ public class SolrFieldIterator implements AutoCloseable, Iterator<BrowseEntry>, 
     protected List<LeafReaderContext> leafReaders;
 
     private String field;
+    private String filter;
     private Normalizer normalizer;
 
     TermsEnum tenum = null;
@@ -39,7 +40,7 @@ public class SolrFieldIterator implements AutoCloseable, Iterator<BrowseEntry>, 
     private BrowseEntry nextEntry = null;
     private boolean exhausted = false;
 
-    public SolrFieldIterator(String indexPath, String field) throws Exception
+    public SolrFieldIterator(String indexPath, String field, String filter) throws Exception
     {
         // Open our composite reader (a top-level DirectoryReader that
         // contains one reader per segment in our index).
@@ -54,6 +55,7 @@ public class SolrFieldIterator implements AutoCloseable, Iterator<BrowseEntry>, 
         leafReaders = new ArrayList<>(reader.getContext().leaves());
 
         this.field = field;
+        this.filter = filter;
 
         String normalizerClass = System.getProperty("browse.normalizer");
         normalizer = NormalizerFactory.getNormalizer(normalizerClass);

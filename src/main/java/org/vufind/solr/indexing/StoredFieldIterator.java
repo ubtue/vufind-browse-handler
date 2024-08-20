@@ -33,7 +33,7 @@ public class StoredFieldIterator extends SolrFieldIterator
 
     public StoredFieldIterator(String indexPath, String field, String filter) throws Exception
     {
-        super (indexPath, field);
+        super (indexPath, field, filter);
         this.filter = filter;
 
         sortField = Utils.getEnvironment("SORTFIELD");
