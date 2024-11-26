@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
-
 import org.apache.lucene.index.CompositeReader;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.LeafReader;
@@ -14,8 +13,11 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.ConstantScoreQuery;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.BytesRef;
@@ -77,7 +79,21 @@ public class SolrFieldIterator implements AutoCloseable, Iterator<BrowseEntry>, 
     private boolean termExists(String t)
     {
         try {
-            return (this.searcher.search(new ConstantScoreQuery(new TermQuery(new Term(this.field, t))),
+            Query q;
+            if (this.filter != null) {
+                TermQuery tq = new TermQuery (new Term (this.field, t));
+                TermQuery fq = new TermQuery (new Term (this.filter, "T"));
+                BooleanQuery.Builder qb = new BooleanQuery.Builder();
+                qb.add(tq, BooleanClause.Occur.MUST);
+                qb.add(fq, BooleanClause.Occur.MUST);
+                q = qb.build();
+            } else {
+                q = new TermQuery (new Term (this.field, t));
+            }
+            
+            // return (this.searcher.search(new ConstantScoreQuery(new TermQuery(new Term(this.field, t))),
+            //                              1).totalHits.value > 0);
+            return (this.searcher.search(new ConstantScoreQuery(q),
                                          1).totalHits.value > 0);
         } catch (IOException e) {
             return false;
