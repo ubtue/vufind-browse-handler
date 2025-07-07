@@ -29,7 +29,7 @@ class HeadingsDB
     {
         try {
             String pathFilter = (filterBy != null) ? filterBy : "";
-            this.path = path.replace("%filter%", pathFilter);this.path = path;
+            this.path = path.replace("%filter%", pathFilter);
             normalizer = NormalizerFactory.getNormalizer();
         } catch (Exception e) {
             throw new RuntimeException(e);
