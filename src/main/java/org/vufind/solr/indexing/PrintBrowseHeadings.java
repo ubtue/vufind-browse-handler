@@ -134,33 +134,8 @@ public class PrintBrowseHeadings
     {
         String fieldIteratorClass = "org.vufind.solr.indexing.SolrFieldIterator";
 
-        if (Utils.getEnvironment("BIBLEECH") != null) {
-            if (System.getenv("BIBLEECH") != null) {
-                Utils.printDeprecationWarning("You are using the 'BIBLEECH' environment variable.",
-                                              "This still works, but it has been renamed to 'BIB_FIELD_ITERATOR'",
-                                              "You should switch to avoid breakage in future versions.");
-            }
-
-            if (System.getProperty("bibleech") != null) {
-                Utils.printDeprecationWarning("You are using the 'bibleech' system property.",
-                                              "This still works, but it has been renamed to 'bib_field_iterator'",
-                                              "You should switch to avoid breakage in future versions.");
-
-            }
-
-            fieldIteratorClass = Utils.getEnvironment("BIBLEECH");
-        }
-
-
         if (Utils.getEnvironment("BIB_FIELD_ITERATOR") != null) {
             fieldIteratorClass = Utils.getEnvironment("BIB_FIELD_ITERATOR");
-        }
-
-        if ("StoredFieldLeech".equals(fieldIteratorClass)) {
-            Utils.printDeprecationWarning("You are using the 'StoredFieldLeech' class.",
-                                          "This still works, but it has been renamed to 'org.vufind.solr.indexing.StoredFieldIterator'",
-                                          "You should switch to avoid breakage in future versions.");
-            fieldIteratorClass = "org.vufind.solr.indexing.StoredFieldIterator";
         }
 
         return (SolrFieldIterator)(Class.forName(fieldIteratorClass)
