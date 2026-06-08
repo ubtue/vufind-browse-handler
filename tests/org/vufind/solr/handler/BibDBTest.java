@@ -341,7 +341,7 @@ public class BibDBTest
         IndexSearcher searcher = searcherRef.get();
         try {
             BibDB bibDbForTitle = new BibDB(searcher, "title_fullStr");
-            assertEquals(bibDbForTitle.matchingFields(title, "id", 0).get("id").size(), 0);
+            assertEquals(bibDbForTitle.matchingFields(title, "id", 0, null).get("id").size(), 0);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Caught exception with unmatched title: " + e.getMessage());
@@ -361,7 +361,7 @@ public class BibDBTest
         IndexSearcher searcher = searcherRef.get();
         try {
             BibDB bibDbForTitle = new BibDB(searcher, "title_fullStr");
-            assertEquals(bibDbForTitle.matchingExtras(title, "id", 0).get("id").size(), 0);
+            assertEquals(bibDbForTitle.matchingExtras(title, "id", 0, null).get("id").size(), 0);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Caught exception with unmatched title: " + e.getMessage());
