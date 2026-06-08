@@ -4,23 +4,19 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.CollectionTerminatedException;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreMode;
-import org.apache.lucene.search.Scorer;
-import org.apache.lucene.search.SimpleCollector;
+import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.TotalHitCountCollector;
+import org.apache.lucene.search.TopDocs;
 
 /**
  *
@@ -67,111 +63,7 @@ public class BibDB
             q = new TermQuery (new Term (this.field, heading));
         }
 
-        TotalHitCountCollector counter = new TotalHitCountCollector();
-        db.search(q, counter);
-
-        return counter.getTotalHits();
-    }
-
-    /**
-     *
-     * Function to retrieve the doc ids when there is a building limit
-     * This retrieves the doc ids for an individual heading
-     *
-     * Need to add a filter query to limit the results from Solr
-     *
-     * Includes functionality to retrieve additional info
-     * like titles for call numbers, possibly ISBNs
-     *
-     * @param heading        string of the heading to use for finding matching
-     * @param extras         docs colon-separated string of Solr fields
-     *                       to return for use in the browse display
-     * @param maxBibListSize maximum numbers of records to check for fields
-     * @return         return a map of Solr ids and extra bib info
-     */
-    @Deprecated
-    public Map<String, List<Collection<String>>> matchingIDs(String heading,
-            String extras,
-            int maxBibListSize,
-            String filterBy)
-    throws Exception
-    {
-        Query q;
-        if (filterBy != null) {
-            TermQuery tq = new TermQuery (new Term (this.field, heading));
-            TermQuery fq = new TermQuery (new Term (filterBy, "T"));
-            BooleanQuery.Builder qb = new BooleanQuery.Builder();
-            qb.add(tq, BooleanClause.Occur.MUST);
-            qb.add(fq, BooleanClause.Occur.MUST);
-            q = qb.build();
-        } else {
-            q = new TermQuery (new Term (this.field, heading));
-        }
-
-        // bibinfo values are List<Collection> because some extra fields
-        // may be multi-valued.
-        // Note: it may be time for bibinfo to become a class...
-        final Map<String, List<Collection<String>>> bibinfo = new HashMap<> ();
-        bibinfo.put("ids", new ArrayList<Collection<String>> ());
-        final String[] bibExtras = extras.split(":");
-        for (String bibField : bibExtras) {
-            bibinfo.put(bibField, new ArrayList<Collection<String>> ());
-        }
-
-        db.search(q, new SimpleCollector() {
-            private LeafReaderContext context;
-
-            public void setScorer(Scorer scorer) {
-            }
-
-            // Will only be used by other classes
-            @SuppressWarnings("unused")
-            public boolean acceptsDocsOutOfOrder() {
-                return true;
-            }
-
-            public boolean needsScores() {
-                return false;
-            }
-
-            public ScoreMode scoreMode() {
-                return ScoreMode.COMPLETE_NO_SCORES;
-            }
-
-            public void doSetNextReader(LeafReaderContext context) {
-                this.context = context;
-            }
-
-
-            public void collect(int docnum) {
-                int docid = docnum + context.docBase;
-                try {
-                    Document doc = db.getIndexReader().document(docid);
-
-                    String[] vals = doc.getValues("id");
-                    Collection<String> id = new HashSet<> ();
-                    id.add(vals[0]);
-                    bibinfo.get("ids").add(id);
-                    for (String bibField : bibExtras) {
-                        vals = doc.getValues(bibField);
-                        if (vals.length > 0) {
-                            Collection<String> valSet = new LinkedHashSet<> ();
-                            for (String val : vals) {
-                                valSet.add(val);
-                            }
-                            bibinfo.get(bibField).add(valSet);
-                        }
-                    }
-                } catch (org.apache.lucene.index.CorruptIndexException e) {
-                    Log.info("CORRUPT INDEX EXCEPTION.  EEK! - " + e);
-                } catch (Exception e) {
-                    Log.info("Exception thrown: " + e);
-                }
-
-            }
-        });
-
-        return bibinfo;
+        return db.count(q);
     }
 
     /**
@@ -223,43 +115,13 @@ public class BibDB
             bibinfo.put(bibField, new ArrayList<Collection<String>> ());
         }
 
-        db.search(q, new SimpleCollector() {
-            private LeafReaderContext context;
-            private int docCount = 0;
+        int maxHits = (maxBibListSize > 0) ? maxBibListSize : db.count(q);
+        if (maxHits > 0) {
+            TopDocs docs = db.search(q, maxHits);
 
-            public void setScorer(Scorer scorer) {
-            }
-
-            // Will only be used by other classes
-            @SuppressWarnings("unused")
-            public boolean acceptsDocsOutOfOrder() {
-                return true;
-            }
-
-            public boolean needsScores() {
-                return false;
-            }
-
-            public ScoreMode scoreMode() {
-                return ScoreMode.COMPLETE_NO_SCORES;
-            }
-
-            public void doSetNextReader(LeafReaderContext context) {
-                this.context = context;
-            }
-
-
-            public void collect(int docnum) {
-                // Terminate collection if exceed maximum bibs
-                if (maxBibListSize > 0 && this.docCount >= maxBibListSize) {
-                    throw new CollectionTerminatedException();
-                } else {
-                    this.docCount++;
-                }
-
-                int docid = docnum + context.docBase;
-                try {
-                    Document doc = db.getIndexReader().storedFields().document(docid);
+            try {
+                for (ScoreDoc sd : docs.scoreDocs) {
+                    Document doc = db.getIndexReader().storedFields().document(sd.doc);
                     for (String bibField : bibExtras) {
                         String[] vals = doc.getValues(bibField);
                         if (vals.length > 0) {
@@ -270,14 +132,13 @@ public class BibDB
                             bibinfo.get(bibField).add(valSet);
                         }
                     }
-                } catch (org.apache.lucene.index.CorruptIndexException e) {
-                    Log.info("CORRUPT INDEX EXCEPTION.  EEK! - " + e);
-                } catch (Exception e) {
-                    Log.info("Exception thrown: " + e);
                 }
-
+            } catch (org.apache.lucene.index.CorruptIndexException e) {
+                Log.info("CORRUPT INDEX EXCEPTION.  EEK! - " + e);
+            } catch (Exception e) {
+                Log.info("Exception thrown: " + e);
             }
-        });
+        }
 
         return bibinfo;
     }
@@ -331,43 +192,12 @@ public class BibDB
             bibinfo.put(bibField, new LinkedHashSet<String> ());
         }
 
-        db.search(q, new SimpleCollector() {
-            private LeafReaderContext context;
-            private int docCount = 0;
-
-            public void setScorer(Scorer scorer) {
-            }
-
-            // Will only be used by other classes
-            @SuppressWarnings("unused")
-            public boolean acceptsDocsOutOfOrder() {
-                return true;
-            }
-
-            public boolean needsScores() {
-                return false;
-            }
-
-            public ScoreMode scoreMode() {
-                return ScoreMode.COMPLETE_NO_SCORES;
-            }
-
-            public void doSetNextReader(LeafReaderContext context) {
-                this.context = context;
-            }
-
-
-            public void collect(int docnum) {
-                // Terminate collection if exceed maximum bibs
-                if (maxBibListSize > 0 && this.docCount >= maxBibListSize) {
-                    throw new CollectionTerminatedException();
-                } else {
-                    this.docCount++;
-                }
-
-                int docid = docnum + context.docBase;
-                try {
-                    Document doc = db.getIndexReader().storedFields().document(docid);
+        int maxHits = (maxBibListSize > 0) ? maxBibListSize : db.count(q);
+        if (maxHits > 0) {
+            TopDocs docs = db.search(q, maxHits);
+            for (ScoreDoc sd : docs.scoreDocs) {
+                                try {
+                    Document doc = db.getIndexReader().storedFields().document(sd.doc);
                     for (String bibField : bibExtras) {
                         for (String v : doc.getValues(bibField)) {
                             bibinfo.get(bibField).add(v);
@@ -378,9 +208,8 @@ public class BibDB
                 } catch (Exception e) {
                     Log.info("Exception thrown: " + e);
                 }
-
             }
-        });
+        }
 
         return bibinfo;
     }

@@ -1,16 +1,15 @@
 package org.vufind.util;
 
-import java.util.regex.*;
-
 import com.ibm.icu.text.CollationKey;
 import com.ibm.icu.text.Collator;
+import java.util.regex.Pattern;
 
 /**
  * Normalizer class which uses the ICU <code>Collator<code> class to produce collation byte arrays.
  * The use of <code>Collator<code> takes into account diacritics and other Unicode features.
  * This normalizer should be suitable for most text fields.
  *
- * @author Mark Triggs <mark@dishevelled.net>
+ * @author Mark Triggs <mark@teaspoon-consulting.com>
  * @author Tod Olson <tod@uchicago.edu>
  *
  */

@@ -1,10 +1,15 @@
-//
-// Author: Mark Triggs <mark@dishevelled.net>
-//
+package org.vufind.solr.indexing;
 
-import java.io.*;
-
-import java.sql.*;
+//
+// Author: Mark Triggs <mark@teaspoon-consulting.com>
+//
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.Statement;
 
 // Note that this version is coming from Solr!
 import org.apache.commons.codec.binary.Base64;
@@ -60,33 +65,31 @@ public class CreateBrowseSQLite
 
         outputDB.setAutoCommit(false);
 
-        PreparedStatement prep = outputDB.prepareStatement(
-                                     "insert or ignore into all_headings (key, key_text, heading) values (?, ?, ?)");
+        try (PreparedStatement prep = outputDB.prepareStatement("insert or ignore into all_headings (key, key_text, heading) values (?, ?, ?)")) {
+            String line;
+            while ((line = readCRLFLine(br)) != null) {
+                String[] fields = line.split(KEY_SEPARATOR);
 
-        String line;
-        while ((line = readCRLFLine(br)) != null) {
-            String[] fields = line.split(KEY_SEPARATOR);
+                if (fields.length == 3) {
+                    // If we found the separator character, we have a key/value pair of
+                    // Base64-encoded strings to decode and push into the batch:
+                    prep.setBytes(1, Base64.decodeBase64(fields[0].getBytes()));
+                    prep.setBytes(2, Base64.decodeBase64(fields[1].getBytes()));
+                    prep.setBytes(3, Base64.decodeBase64(fields[2].getBytes()));
 
-            if (fields.length == 3) {
-                // If we found the separator character, we have a key/value pair of
-                // Base64-encoded strings to decode and push into the batch:
-                prep.setBytes(1, Base64.decodeBase64(fields[0].getBytes()));
-                prep.setBytes(2, Base64.decodeBase64(fields[1].getBytes()));
-                prep.setBytes(3, Base64.decodeBase64(fields[2].getBytes()));
+                    prep.addBatch();
+                }
 
-                prep.addBatch();
+                if ((count % 500000) == 0) {
+                    prep.executeBatch();
+                    prep.clearBatch();
+                }
+
+                count++;
             }
 
-            if ((count % 500000) == 0) {
-                prep.executeBatch();
-                prep.clearBatch();
-            }
-
-            count++;
+            prep.executeBatch();
         }
-
-        prep.executeBatch();
-        prep.close();
 
         outputDB.commit();
         outputDB.setAutoCommit(true);
@@ -96,29 +99,26 @@ public class CreateBrowseSQLite
     private void setupDatabase()
     throws Exception
     {
-        Statement stat = outputDB.createStatement();
-
-        stat.executeUpdate("drop table if exists all_headings;");
-        stat.executeUpdate("create table all_headings (key, key_text, heading);");
-        stat.executeUpdate("PRAGMA synchronous = OFF;");
-        stat.execute("PRAGMA journal_mode = OFF;");
-
-        stat.close();
+        try (Statement stat = outputDB.createStatement()) {
+            stat.executeUpdate("drop table if exists all_headings;");
+            stat.executeUpdate("create table all_headings (key, key_text, heading);");
+            stat.executeUpdate("PRAGMA synchronous = OFF;");
+            stat.execute("PRAGMA journal_mode = OFF;");
+        }
     }
 
 
     private void buildOrderedTables()
     throws Exception
     {
-        Statement stat = outputDB.createStatement();
+        try (Statement stat = outputDB.createStatement()) {
 
-        stat.executeUpdate("drop table if exists headings;");
-        stat.executeUpdate("create table headings " +
-                           "as select * from all_headings order by key;");
+            stat.executeUpdate("drop table if exists headings;");
+            stat.executeUpdate("create table headings " +
+                               "as select * from all_headings order by key;");
 
-        stat.executeUpdate("create index keyindex on headings (key);");
-
-        stat.close();
+            stat.executeUpdate("create index keyindex on headings (key);");
+        }
     }
 
 
@@ -130,12 +130,9 @@ public class CreateBrowseSQLite
 
         setupDatabase();
 
-        BufferedReader br = new BufferedReader
-        (new FileReader(headingsFile));
-
-        loadHeadings(br);
-
-        br.close();
+        try (BufferedReader br = new BufferedReader(new FileReader(headingsFile))) {
+            loadHeadings(br);
+        }
 
         buildOrderedTables();
     }
