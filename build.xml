@@ -13,9 +13,7 @@
   <!-- The solr.install.dir property was added to work around an issue in the Solr 9.1 test suite;
        it can probably be safely removed once VuFind upgrades to Solr 9.2 or higher. -->
   <property name="solr.install.dir" value="${absolute.vufind.dir}/solr/vendor"/>
-  <property name="java.compat.version" value="1.8"/>
-  <property name="ant.build.javac.source" value="1.8"/>
-  <property name="ant.build.javac.target" value="1.8"/>
+  <property name="java.compat.version" value="11"/>
 
   <path id="classpath">
     <pathelement location="${builddir}"/>
@@ -78,9 +76,11 @@
     <!-- <pathconvert property="classpathProp" refid="classpath"/> -->
     <!-- <echo>Classpath: ${classpathProp}</echo> -->
     <mkdir dir="${builddir}"/>
-    <javac debug="on" srcdir="src/main/java" destdir="${builddir}">
+    <javac debug="on" srcdir="src/main/java" destdir="${builddir}"
+           release="${java.compat.version}">
       <classpath refid="classpath"/>
       <compilerarg value="-Xlint"/>
+      <compilerarg value="-proc:none"/>
     </javac>
     <exec executable="sh" output="${builddir}/VERSION">
       <arg value="-c"/>
@@ -164,6 +164,7 @@
             depends="build">
       <mkdir dir="${testdir}"/>
       <javac fork="true" debug="on" srcdir="tests/" destdir="${testdir}"
+             release="${java.compat.version}"
              classpath="tests/lib/*:${toString:classpath}:${builddir}">
         <compilerarg line="-encoding UTF-8" />
       </javac>
