@@ -5,6 +5,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import org.vufind.util.Normalizer;
+
 /**
  * Class that performs the alphabetical browse of an index and produces a
  * {@code BrowseList} object.
@@ -26,14 +28,16 @@ class Browse
         this.maxBibListSize = maxBibListSize;
     }
 
-    private void populateItem(BrowseItem item, String fields, String filterBy) throws Exception
+    private void populateItem(BrowseItem item, String fields, Normalizer normalizer, String filterBy) throws Exception
     {
         Map<String, List<Collection<String>>> bibinfo =
             bibDB.matchingExtras(item.getHeading(), fields, maxBibListSize, filterBy);
         item.setExtras(bibinfo);
         item.setCount(bibDB.recordCount(item.getHeading(), filterBy));
 
-        Map<String, List<String>> authFields = authDB.getFields(item.getHeading());
+        String headingForAuthLookup = normalizer.headingForAuthQuery(item.getHeading());
+
+        Map<String, List<String>> authFields = authDB.getFields(headingForAuthLookup);
 
         List<String> seeAlsoList = new ArrayList<String>();
         for (String value : authFields.get("seeAlso")) {
@@ -63,7 +67,7 @@ class Browse
     }
 
 
-    public BrowseList getList(int rowid, int offset, int rows, String extras, String filterBy)
+    public BrowseList getList(int rowid, int offset, int rows, String extras, Normalizer normalizer, String filterBy)
     throws Exception
     {
         BrowseList result = new BrowseList();
@@ -79,7 +83,7 @@ class Browse
 
             BrowseItem item = new BrowseItem(sort_key, heading);
 
-            populateItem(item, extras, filterBy);
+            populateItem(item, extras, normalizer, filterBy);
 
             result.add(item);
         }

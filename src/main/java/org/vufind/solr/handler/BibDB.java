@@ -195,8 +195,9 @@ public class BibDB
         int maxHits = (maxBibListSize > 0) ? maxBibListSize : db.count(q);
         if (maxHits > 0) {
             TopDocs docs = db.search(q, maxHits);
+
             for (ScoreDoc sd : docs.scoreDocs) {
-                                try {
+                try {
                     Document doc = db.getIndexReader().storedFields().document(sd.doc);
                     for (String bibField : bibExtras) {
                         for (String v : doc.getValues(bibField)) {
